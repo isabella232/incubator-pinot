@@ -33,6 +33,7 @@ import org.apache.pinot.core.segment.index.readers.FloatDictionary;
 import org.apache.pinot.core.segment.index.readers.ForwardIndexReader;
 import org.apache.pinot.core.segment.index.readers.IntDictionary;
 import org.apache.pinot.core.segment.index.readers.InvertedIndexReader;
+import org.apache.pinot.core.segment.index.readers.JSONIndexReader;
 import org.apache.pinot.core.segment.index.readers.LongDictionary;
 import org.apache.pinot.core.segment.index.readers.NullValueVectorReaderImpl;
 import org.apache.pinot.core.segment.index.readers.OnHeapDoubleDictionary;
@@ -70,6 +71,7 @@ public final class PhysicalColumnIndexContainer implements ColumnIndexContainer 
   private final BaseImmutableDictionary _dictionary;
   private final BloomFilterReader _bloomFilter;
   private final NullValueVectorReaderImpl _nullValueVectorReader;
+  private final JSONIndexReader _jsonIndex;
 
   public PhysicalColumnIndexContainer(SegmentDirectory.Reader segmentReader, ColumnMetadata metadata,
       IndexLoadingConfig indexLoadingConfig, File segmentIndexDir)
@@ -79,6 +81,7 @@ public final class PhysicalColumnIndexContainer implements ColumnIndexContainer 
     boolean loadRangeIndex = indexLoadingConfig.getRangeIndexColumns().contains(columnName);
     boolean loadTextIndex = indexLoadingConfig.getTextIndexColumns().contains(columnName);
     boolean loadOnHeapDictionary = indexLoadingConfig.getOnHeapDictionaryColumns().contains(columnName);
+    boolean loadJSONIndex = indexLoadingConfig.getJsonIndexColumns().contains(columnName);
     BloomFilterConfig bloomFilterConfig = indexLoadingConfig.getBloomFilterConfigs().get(columnName);
 
     if (segmentReader.hasIndexFor(columnName, ColumnIndexType.NULLVALUE_VECTOR)) {
@@ -95,6 +98,13 @@ public final class PhysicalColumnIndexContainer implements ColumnIndexContainer 
           columnProperties.get(columnName));
     } else {
       _textIndex = null;
+    }
+    if (loadJSONIndex) {
+      Preconditions.checkState(segmentReader.hasIndexFor(columnName, ColumnIndexType.JSON_INDEX));
+      PinotDataBuffer jsonIndexBuffer = segmentReader.getIndexFor(columnName, ColumnIndexType.JSON_INDEX);
+      _jsonIndex = new JSONIndexReader(jsonIndexBuffer);
+    } else {
+      _jsonIndex = null;
     }
 
     PinotDataBuffer fwdIndexBuffer = segmentReader.getIndexFor(columnName, ColumnIndexType.FORWARD_INDEX);
@@ -185,6 +195,11 @@ public final class PhysicalColumnIndexContainer implements ColumnIndexContainer 
   @Override
   public NullValueVectorReaderImpl getNullValueVector() {
     return _nullValueVectorReader;
+  }
+
+  @Override
+  public JSONIndexReader getJSONIndex() {
+    return _jsonIndex;
   }
 
   //TODO: move this to a DictionaryLoader class

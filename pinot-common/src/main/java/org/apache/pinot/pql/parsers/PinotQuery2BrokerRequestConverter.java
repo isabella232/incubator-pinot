@@ -271,6 +271,7 @@ public class PinotQuery2BrokerRequestConverter {
           case IN:
           case TEXT_MATCH:
           case RANGE:
+          case JSON_MATCH:
             //first operand is the always the column
             filterQuery.setColumn(ParserUtils.standardizeExpression(operands.get(0), false));
             filterQuery.setValue(ParserUtils.getFilterValues(filterKind, operands));

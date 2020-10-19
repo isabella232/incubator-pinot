@@ -60,6 +60,7 @@ import org.apache.pinot.core.segment.index.metadata.SegmentMetadata;
 import org.apache.pinot.core.segment.index.metadata.SegmentMetadataImpl;
 import org.apache.pinot.core.segment.index.readers.BloomFilterReader;
 import org.apache.pinot.core.segment.index.readers.InvertedIndexReader;
+import org.apache.pinot.core.segment.index.readers.JSONIndexReader;
 import org.apache.pinot.core.segment.index.readers.MutableForwardIndex;
 import org.apache.pinot.core.segment.index.readers.ValidDocIndexReader;
 import org.apache.pinot.core.segment.index.readers.ValidDocIndexReaderImpl;
@@ -326,10 +327,10 @@ public class MutableSegmentImpl implements MutableSegment {
       // Null value vector
       MutableNullValueVector nullValueVector = _nullHandlingEnabled ? new MutableNullValueVector() : null;
 
-      // TODO: Support range index and bloom filter for mutable segment
+      // TODO: Support range index and bloom filter and json index for mutable segment
       _indexContainerMap.put(column,
           new IndexContainer(fieldSpec, partitionFunction, partitions, new NumValuesInfo(), forwardIndex, dictionary,
-              invertedIndexReader, null, textIndex, null, nullValueVector));
+              invertedIndexReader, null, textIndex, null, nullValueVector, null));
     }
 
     if (_realtimeLuceneReaders != null) {
@@ -1039,6 +1040,7 @@ public class MutableSegmentImpl implements MutableSegment {
     final RealtimeLuceneTextIndexReader _textIndex;
     final BloomFilterReader _bloomFilter;
     final MutableNullValueVector _nullValueVector;
+    final JSONIndexReader _jsonIndex;
 
     volatile Comparable _minValue;
     volatile Comparable _maxValue;
@@ -1051,7 +1053,8 @@ public class MutableSegmentImpl implements MutableSegment {
         @Nullable Set<Integer> partitions, NumValuesInfo numValuesInfo, MutableForwardIndex forwardIndex,
         @Nullable BaseMutableDictionary dictionary, @Nullable RealtimeInvertedIndexReader invertedIndex,
         @Nullable InvertedIndexReader rangeIndex, @Nullable RealtimeLuceneTextIndexReader textIndex,
-        @Nullable BloomFilterReader bloomFilter, @Nullable MutableNullValueVector nullValueVector) {
+        @Nullable BloomFilterReader bloomFilter, @Nullable MutableNullValueVector nullValueVector,
+        JSONIndexReader jsonIndex) {
       _fieldSpec = fieldSpec;
       _partitionFunction = partitionFunction;
       _partitions = partitions;
@@ -1063,12 +1066,13 @@ public class MutableSegmentImpl implements MutableSegment {
       _textIndex = textIndex;
       _bloomFilter = bloomFilter;
       _nullValueVector = nullValueVector;
+      _jsonIndex = jsonIndex;
     }
 
     DataSource toDataSource() {
       return new MutableDataSource(_fieldSpec, _numDocsIndexed, _numValuesInfo._numValues,
           _numValuesInfo._maxNumValuesPerMVEntry, _partitionFunction, _partitions, _minValue, _maxValue, _forwardIndex,
-          _dictionary, _invertedIndex, _rangeIndex, _textIndex, _bloomFilter, _nullValueVector);
+          _dictionary, _invertedIndex, _rangeIndex, _textIndex, _bloomFilter, _nullValueVector, _jsonIndex);
     }
 
     @Override

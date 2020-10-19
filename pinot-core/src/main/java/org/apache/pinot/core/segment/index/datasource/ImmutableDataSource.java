@@ -23,7 +23,9 @@ import javax.annotation.Nullable;
 import org.apache.pinot.core.common.DataSourceMetadata;
 import org.apache.pinot.core.data.partition.PartitionFunction;
 import org.apache.pinot.core.segment.index.column.ColumnIndexContainer;
+import org.apache.pinot.core.segment.index.datasource.BaseDataSource;
 import org.apache.pinot.core.segment.index.metadata.ColumnMetadata;
+import org.apache.pinot.core.segment.index.readers.JSONIndexReader;
 import org.apache.pinot.spi.data.FieldSpec;
 
 
@@ -36,8 +38,9 @@ public class ImmutableDataSource extends BaseDataSource {
     super(new ImmutableDataSourceMetadata(columnMetadata), columnIndexContainer.getForwardIndex(),
         columnIndexContainer.getDictionary(), columnIndexContainer.getInvertedIndex(),
         columnIndexContainer.getRangeIndex(), columnIndexContainer.getTextIndex(),
-        columnIndexContainer.getBloomFilter(), columnIndexContainer.getNullValueVector());
+        columnIndexContainer.getBloomFilter(), columnIndexContainer.getNullValueVector(), columnIndexContainer.getJSONIndex());
   }
+
 
   private static class ImmutableDataSourceMetadata implements DataSourceMetadata {
     final FieldSpec _fieldSpec;
